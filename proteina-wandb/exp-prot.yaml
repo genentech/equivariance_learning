@@ -1,0 +1,12 @@
+entity: maxwshen
+project: protein_transformer_big_runs
+
+experiments:
+  default1: [5dpvxu30,8wex9lkf,lwzi4b6f]
+  default2: [vypqrxfz,gfr4lv8a,wbtgd2dr]
+  default3: [ijcr5ysa,bnshmbkv,9ctblkz6]
+
+  train-0.01: i0onz4wf
+  train-0.001: 244yqe7l
+
+  param-400M: i795ooog
