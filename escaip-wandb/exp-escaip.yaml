@@ -10,6 +10,9 @@ experiments:
   train-5k: 2025-06-20-16-04-32
   train-500-bs1: 2025-06-20-16-00-16
 
+  # currently running. started 2pm on 7/2/25
+  # train-50k-longer: 2025-07-02-13-45-52
+
   param-1M: 2025-05-16-14-31-28
   param-4M: [2025-06-18-17-53-20, 2025-06-19-10-14-40]
 
