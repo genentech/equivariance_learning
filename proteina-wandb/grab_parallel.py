@@ -1,6 +1,7 @@
 import yaml
 import pandas as pd
 import wandb
+from datetime import datetime, timezone
 from pathlib import Path
 from concurrent.futures import ThreadPoolExecutor, as_completed
 
@@ -19,6 +20,49 @@ def process_experiment(experiment_name, run_ids, entity, project):
     """
     if not isinstance(run_ids, list):
         run_ids = [run_ids]  # Ensure it's a list for consistency
+
+    output_file = output_dir / f"{experiment_name}.csv"
+    
+    needs_update = False
+    if not output_file.exists():
+        needs_update = True
+        print(f"🚀 Starting experiment: {experiment_name} (No local file)")
+    else:
+        local_mtime_utc = datetime.fromtimestamp(output_file.stat().st_mtime, tz=timezone.utc)
+        print(f"🔎 Checking for updates for experiment: {experiment_name}...")
+        
+        for run_id in run_ids:
+            try:
+                run_path = f"{entity}/{project}/{run_id}"
+                run = api.run(run_path)
+                
+                # --- CORRECTED TIMESTAMP LOGIC ---
+                # Find the best available timestamp, preferring the most recent activity indicator.
+                # 'heartbeat_at' is the most reliable indicator of recent activity.
+                if hasattr(run, 'heartbeat_at') and run.heartbeat_at:
+                    timestamp_str = run.heartbeat_at
+                elif hasattr(run, 'updated_at') and run.updated_at:
+                    timestamp_str = run.updated_at
+                else:
+                    # 'created_at' is a guaranteed fallback.
+                    timestamp_str = run.created_at
+                
+                # Convert the chosen timestamp string to a timezone-aware datetime object
+                run_activity_utc = pd.to_datetime(timestamp_str).tz_convert('UTC')
+
+                if run_activity_utc > local_mtime_utc:
+                    print(f"   - Stale data detected for {experiment_name}. Run '{run_id}' is newer.")
+                    needs_update = True
+                    break 
+            except Exception as e:
+                print(f"   - WARNING: Could not check update status for run {run_id}: {e}")
+                needs_update = True 
+                break
+
+    if not needs_update:
+        print(f"✅ Skipping experiment: {experiment_name} (Local file is up-to-date)")
+        return f"Up-to-date: {experiment_name}"
+
 
     all_metrics = []
     print(f"🚀 Starting experiment: {experiment_name}")
